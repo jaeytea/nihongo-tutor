@@ -4,3 +4,5 @@ faster-whisper
 av<19
 pykakasi
 python-multipart
+openai
+python-dotenv
