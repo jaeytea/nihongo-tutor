@@ -3,6 +3,7 @@ import tempfile
 import unicodedata
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 
 from faster_whisper import WhisperModel
@@ -52,9 +53,11 @@ ASK_SYSTEM_PROMPT = (
     "Answer in simple Hindi in at most 3 short sentences. "
     "Write Japanese only in hiragana, never romaji. "
     "Only answer questions about learning Japanese; for anything else, kindly say you can only help with Japanese. "
-    "If you are not sure, say so instead of guessing. Never invent words."
+    "If you are not sure, say so instead of guessing. Never invent words. "
+    "Only talk about learning Japanese. Never talk about real people, celebrities, music, games or news. Never guess."
 )
 ASK_FALLBACK = "अभी जवाब नहीं मिल पाया। चलो, जापानी सीखते रहें!"
+SAVED_QUESTION_MESSAGE = "यह सवाल मैंने सेव कर लिया है, भैया/दीदी से पूछना!"
 
 
 @app.post("/explain")
@@ -74,9 +77,54 @@ class AskRequest(BaseModel):
     question: str = Field(max_length=200)
 
 
+def is_japanese_question(question: str) -> bool:
+    has_kana = any(
+        "\u3041" <= character <= "\u3096"
+        or "\u309d" <= character <= "\u309f"
+        or "\u30a1" <= character <= "\u30fa"
+        or "\u30fd" <= character <= "\u30ff"
+        or "\u31f0" <= character <= "\u31ff"
+        for character in question
+    )
+    if has_kana:
+        return True
+
+    keywords = (
+        "japanese",
+        "hiragana",
+        "katakana",
+        "pronounce",
+        "say",
+        "word",
+        "sound",
+        "meaning",
+        "जापानी",
+        "हिरागाना",
+        "उच्चारण",
+        "बोलते",
+        "कहते",
+        "शब्द",
+        "मतलब",
+    )
+    lowered_question = question.casefold()
+    return any(keyword in lowered_question for keyword in keywords)
+
+
 @app.post("/ask")
 def ask_question(payload: AskRequest) -> dict[str, str]:
-    reply = ask_llm(ASK_SYSTEM_PROMPT, payload.question)
+    if not is_japanese_question(payload.question):
+        timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+        saved_question = payload.question.replace("\r", " ").replace("\n", " ")
+        with (BASE_DIR / "questions.txt").open("a", encoding="utf-8") as questions_file:
+            questions_file.write(f"[{timestamp}] {saved_question}\n")
+        return {"message": SAVED_QUESTION_MESSAGE, "source": "saved"}
+
+    reply = ask_llm(
+        ASK_SYSTEM_PROMPT,
+        payload.question,
+        temperature=0.2,
+        max_tokens=120,
+    )
     if reply and reply.strip():
         return {"message": reply.strip(), "source": "llm"}
     return {"message": ASK_FALLBACK, "source": "fallback"}

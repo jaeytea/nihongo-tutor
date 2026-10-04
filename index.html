@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f4edc8" />
-    <title>Kana Picnic</title>
+    <title>Hiragana Tutor</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -325,6 +325,43 @@
         text-align: center;
       }
 
+      .tutor-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .tutor-suggestion {
+        padding: 6px 10px;
+        border: 1px solid #78988c;
+        border-radius: 999px;
+        background: #edf6ee;
+        color: var(--ink);
+        cursor: pointer;
+        font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .tutor-suggestion:hover:not(:disabled) {
+        background: var(--mint);
+      }
+
+      .tutor-suggestion:disabled {
+        cursor: not-allowed;
+        opacity: 0.62;
+      }
+
+      .tutor-llm-note {
+        margin: 4px 0 0;
+        color: #55736a;
+        font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
       .tutor-ask-form {
         display: flex;
         align-items: stretch;
@@ -555,7 +592,7 @@
         <div class="brand" aria-label="Hiragana Picnic">
           <div class="brand-mark" aria-hidden="true">あ</div>
           <div>
-            <p class="brand-name">Kana Picnic</p>
+            <p class="brand-name">Hiragana Lessons</p>
             <p class="brand-note">Little sounds, big discoveries</p>
           </div>
         </div>
@@ -721,6 +758,29 @@
               <h2 class="tutor-ask-title" id="tutor-ask-title">
                 Ask the tutor
               </h2>
+              <div class="tutor-suggestions" aria-label="Suggested questions">
+                <button
+                  class="tutor-suggestion"
+                  type="button"
+                  data-question="इसे कैसे बोलते हैं?"
+                >
+                  इसे कैसे बोलते हैं?
+                </button>
+                <button
+                  class="tutor-suggestion"
+                  type="button"
+                  data-question="इस आवाज़ वाला दूसरा शब्द बताओ"
+                >
+                  इस आवाज़ वाला दूसरा शब्द बताओ
+                </button>
+                <button
+                  class="tutor-suggestion"
+                  type="button"
+                  data-question="इसे याद कैसे रखें?"
+                >
+                  इसे याद कैसे रखें?
+                </button>
+              </div>
               <form class="tutor-ask-form" id="tutor-ask-form">
                 <input
                   class="tutor-question"
@@ -742,6 +802,9 @@
                 role="status"
                 aria-live="polite"
               ></p>
+              <p class="tutor-llm-note" id="tutor-llm-note" hidden>
+                मैं गलत भी हो सकता हूँ, भैया/दीदी से पूछकर देखो।
+              </p>
             </section>
           </div>
 
@@ -831,6 +894,9 @@
       const tutorQuestionInput = document.querySelector("#tutor-question");
       const tutorAskButton = document.querySelector("#tutor-ask-button");
       const tutorAnswerElement = document.querySelector("#tutor-answer");
+      const tutorLlmNoteElement = document.querySelector("#tutor-llm-note");
+      const tutorSuggestionButtons =
+        document.querySelectorAll(".tutor-suggestion");
       const previousButton = document.querySelector("#previous");
       const nextButton = document.querySelector("#next");
       const lessonScreen = document.querySelector("#lesson-screen");
@@ -1178,13 +1244,30 @@
         examplePractice.hidden = true;
       });
 
+      tutorSuggestionButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          if (!currentLesson) return;
+          tutorQuestionInput.value = [
+            button.dataset.question,
+            `अक्षर ${currentLesson.char}`,
+            `शब्द ${currentLesson.example_word ?? ""}`,
+            `अर्थ ${currentLesson.example_meaning_hi ?? ""}`,
+          ].join("; ");
+          tutorAskForm.requestSubmit();
+        });
+      });
+
       tutorAskForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const question = tutorQuestionInput.value.trim();
         if (!question) return;
 
         tutorAskButton.disabled = true;
+        tutorSuggestionButtons.forEach((button) => {
+          button.disabled = true;
+        });
         tutorAnswerElement.textContent = "thinking...";
+        tutorLlmNoteElement.hidden = true;
         try {
           const response = await fetch("/ask", {
             method: "POST",
@@ -1194,11 +1277,15 @@
           const result = await response.json();
           if (!response.ok) throw new Error("Request failed");
           tutorAnswerElement.textContent = result.message || "";
+          tutorLlmNoteElement.hidden = result.source !== "llm";
         } catch {
           tutorAnswerElement.textContent =
             "जवाब नहीं मिल पाया। कृपया फिर से कोशिश करें।";
         } finally {
           tutorAskButton.disabled = false;
+          tutorSuggestionButtons.forEach((button) => {
+            button.disabled = false;
+          });
         }
       });
 
