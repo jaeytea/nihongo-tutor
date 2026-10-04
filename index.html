@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f4edc8" />
+    <title>Kana Picnic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #193c36;
+        --paper: #fffdf2;
+        --mint: #c9ebd8;
+        --coral: #ee6f55;
+        --yellow: #f6c952;
+        --blue: #75c6d0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background-color: #f4edc8;
+        background-image:
+          repeating-linear-gradient(
+            0deg,
+            transparent 0 35px,
+            rgb(25 60 54 / 5%) 35px 36px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent 0 35px,
+            rgb(25 60 54 / 5%) 35px 36px
+          );
+        font-family:
+          "Fredoka", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .page {
+        width: min(100% - 36px, 780px);
+        min-height: 100vh;
+        margin-inline: auto;
+        display: flex;
+        flex-direction: column;
+        padding: 22px 0 18px;
+      }
+
+      .topbar,
+      .brand,
+      .counter,
+      .actions,
+      .play-button,
+      .next-button,
+      .record-button,
+      .skip-button,
+      .footer {
+        display: flex;
+        align-items: center;
+      }
+
+      .topbar {
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .brand {
+        gap: 11px;
+      }
+
+      .brand-mark {
+        width: 42px;
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--ink);
+        border-radius: 12px;
+        background: var(--coral);
+        box-shadow: 3px 3px 0 var(--ink);
+        color: var(--paper);
+        font-family: "Noto Sans JP", sans-serif;
+        font-size: 23px;
+        font-weight: 700;
+        transform: rotate(-5deg);
+      }
+
+      .brand-name {
+        margin: 0;
+        font-size: 21px;
+        font-weight: 600;
+      }
+      .brand-note {
+        margin: 1px 0 0;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .counter {
+        gap: 7px;
+        padding: 8px 12px;
+        border: 2px solid var(--ink);
+        border-radius: 999px;
+        background: var(--paper);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .counter-mark {
+        color: var(--coral);
+        font-size: 16px;
+      }
+
+      .score-badge {
+        padding: 8px 12px;
+        border: 2px solid var(--ink);
+        border-radius: 999px;
+        background: var(--yellow);
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      main {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        padding: 30px 0;
+      }
+
+      .lesson-board {
+        width: min(100%, 560px);
+        padding: clamp(22px, 6vw, 42px) clamp(18px, 7vw, 58px) 34px;
+        border: 3px solid var(--ink);
+        border-radius: 20px;
+        background: var(--paper);
+        box-shadow: 8px 8px 0 var(--ink);
+        text-align: center;
+        animation: arrive 450ms ease-out both;
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: #477b66;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .character {
+        min-height: 220px;
+        margin: 2px 0 3px;
+        display: grid;
+        place-items: center;
+        color: var(--coral);
+        font-family: "Noto Sans JP", "Hiragino Maru Gothic ProN", sans-serif;
+        font-size: clamp(150px, 34vw, 220px);
+        font-weight: 500;
+        line-height: 1.15;
+      }
+
+      .hint-label {
+        margin: 6px 0 3px;
+        color: #55736a;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .hint {
+        min-height: 34px;
+        margin: 0;
+        font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
+        font-size: clamp(18px, 4vw, 22px);
+        font-weight: 500;
+        line-height: 1.55;
+      }
+
+      .actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 27px;
+      }
+
+      .play-button,
+      .next-button,
+      .record-button,
+      .skip-button {
+        min-height: 52px;
+        justify-content: center;
+        gap: 9px;
+        padding: 0 20px;
+        border: 2px solid var(--ink);
+        border-radius: 12px;
+        box-shadow: 3px 3px 0 var(--ink);
+        cursor: pointer;
+        font-size: 17px;
+        font-weight: 600;
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease;
+      }
+
+      .play-button {
+        background: var(--yellow);
+        color: var(--ink);
+      }
+      .next-button {
+        background: var(--mint);
+        color: var(--ink);
+      }
+      .record-button {
+        background: var(--coral);
+        color: var(--paper);
+      }
+      .skip-button {
+        background: var(--mint);
+        color: var(--ink);
+      }
+
+      .play-button:hover,
+      .next-button:hover,
+      .record-button:hover,
+      .skip-button:hover {
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+      .play-button:active,
+      .next-button:active,
+      .record-button:active,
+      .skip-button:active {
+        transform: translate(3px, 3px);
+        box-shadow: 0 0 0 var(--ink);
+      }
+      button:focus-visible {
+        outline: 3px solid #2679a1;
+        outline-offset: 4px;
+      }
+
+      .button-icon {
+        width: 20px;
+        height: 20px;
+        flex: none;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.62;
+      }
+
+      .example-practice {
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 1px dashed rgb(25 60 54 / 28%);
+      }
+
+      .example-word {
+        margin: 2px 0 0;
+        color: #c45440;
+        font-family: "Noto Sans JP", "Hiragino Maru Gothic ProN", sans-serif;
+        font-size: clamp(40px, 10vw, 58px);
+        font-weight: 600;
+        line-height: 1.25;
+      }
+
+      .example-meaning {
+        margin: 3px 0 0;
+        font-family: "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
+        font-size: 19px;
+        line-height: 1.5;
+      }
+
+      .example-actions {
+        margin-top: 15px;
+      }
+
+      .voice-message {
+        min-height: 24px;
+        margin: 14px 0 0;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
+      .voice-message[data-state="listening"] {
+        color: #24714c;
+      }
+
+      .voice-message[data-state="checking"] {
+        color: #55736a;
+      }
+
+      .message {
+        min-height: 20px;
+        margin: 18px 0 0;
+        color: #a04435;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .quiz-title {
+        margin: 14px 0 0;
+        font-size: clamp(23px, 5vw, 30px);
+        font-weight: 600;
+      }
+
+      .quiz-copy {
+        margin: 5px 0 0;
+        color: #55736a;
+        font-size: 16px;
+      }
+
+      .quiz-play-row {
+        display: flex;
+        justify-content: center;
+        margin: 22px 0 16px;
+      }
+
+      .choices {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .choice-button {
+        min-width: 0;
+        aspect-ratio: 1;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--ink);
+        border-radius: 14px;
+        background: var(--blue);
+        box-shadow: 3px 3px 0 var(--ink);
+        color: var(--ink);
+        cursor: pointer;
+        font-family: "Noto Sans JP", "Hiragino Maru Gothic ProN", sans-serif;
+        font-size: clamp(38px, 10vw, 64px);
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease,
+          background-color 120ms ease;
+      }
+
+      .choice-button:nth-child(2) {
+        background: var(--yellow);
+      }
+
+      .choice-button:nth-child(3) {
+        background: var(--mint);
+      }
+
+      .choice-button:hover:not(:disabled) {
+        transform: translate(1px, 1px);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+
+      .choice-button:disabled {
+        cursor: default;
+      }
+
+      .choice-button.is-correct {
+        background: #8cdb83;
+      }
+
+      .choice-button.is-wrong {
+        background: #f49a88;
+      }
+
+      .quiz-message {
+        min-height: 26px;
+        margin: 17px 0 0;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .quiz-next-row {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .result-score {
+        margin: 16px 0 8px;
+        color: var(--coral);
+        font-size: clamp(48px, 14vw, 76px);
+        font-weight: 700;
+        line-height: 1.1;
+      }
+
+      .result-copy {
+        margin: 0 0 22px;
+        font-size: 18px;
+      }
+
+      .footer {
+        justify-content: center;
+        gap: 7px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .footer-sun {
+        color: #d08a24;
+        font-size: 18px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      @keyframes arrive {
+        from {
+          opacity: 0;
+          transform: translateY(10px) rotate(-0.5deg);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) rotate(0);
+        }
+      }
+
+      @media (max-width: 440px) {
+        .page {
+          width: min(100% - 26px, 780px);
+          padding-top: 16px;
+        }
+        .brand-name {
+          font-size: 18px;
+        }
+        .brand-note {
+          font-size: 11px;
+        }
+        .brand-mark {
+          width: 37px;
+          font-size: 21px;
+        }
+        .counter {
+          padding: 7px 9px;
+          font-size: 12px;
+        }
+        .score-badge {
+          padding: 7px 9px;
+          font-size: 12px;
+        }
+        .lesson-board {
+          box-shadow: 5px 5px 0 var(--ink);
+        }
+        .character {
+          min-height: 190px;
+        }
+        .actions {
+          gap: 10px;
+        }
+        .play-button,
+        .next-button,
+        .record-button,
+        .skip-button,
+        .quiz-next-button {
+          min-height: 50px;
+          padding-inline: 15px;
+          font-size: 16px;
+        }
+        .choices {
+          gap: 8px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand" aria-label="Hiragana Picnic">
+          <div class="brand-mark" aria-hidden="true">あ</div>
+          <div>
+            <p class="brand-name">Kana Picnic</p>
+            <p class="brand-note">Little sounds, big discoveries</p>
+          </div>
+        </div>
+        <div class="counter" aria-live="polite">
+          <span class="counter-mark" aria-hidden="true">★</span>
+          <span id="counter">Loading</span>
+        </div>
+        <div class="score-badge" id="score-badge" hidden>
+          Score <span id="score">0</span>
+        </div>
+      </header>
+
+      <main>
+        <section
+          class="lesson-board"
+          aria-label="Hiragana lesson"
+          aria-live="polite"
+        >
+          <div id="lesson-screen">
+            <p class="eyebrow">ひらがな · Hiragana</p>
+            <div class="character" id="character" lang="ja">あ</div>
+            <p class="hint-label">Sounds like</p>
+            <p class="hint" id="hint" lang="hi"></p>
+            <div class="actions">
+              <button class="play-button" id="play" type="button" disabled>
+                <svg
+                  class="button-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5 10v4h4l5 4V6l-5 4H5Z"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M17 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                Play sound
+              </button>
+              <button class="next-button" id="previous" type="button" disabled>
+                <svg
+                  class="button-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M19 12H5m6 6-6-6 6-6"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Previous
+              </button>
+              <button class="next-button" id="next" type="button" disabled>
+                Next
+                <svg
+                  class="button-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5 12h14m-6-6 6 6-6 6"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <p class="message" id="message" role="status"></p>
+            <section
+              class="example-practice"
+              id="example-practice"
+              aria-label="Example word practice"
+              hidden
+            >
+              <p class="hint-label">Try this word</p>
+              <p class="example-word" id="example-word" lang="ja"></p>
+              <p class="example-meaning" id="example-meaning" lang="hi"></p>
+              <div class="actions example-actions">
+                <button class="play-button" id="play-example" type="button">
+                  <svg
+                    class="button-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M5 10v4h4l5 4V6l-5 4H5Z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M17 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                  Play word
+                </button>
+                <button
+                  class="record-button"
+                  id="record-example"
+                  type="button"
+                  title="Record for about three seconds"
+                >
+                  <svg
+                    class="button-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <rect
+                      x="9"
+                      y="3"
+                      width="6"
+                      height="12"
+                      rx="3"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                    <path
+                      d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                  Speak
+                </button>
+                <button class="skip-button" id="skip-example" type="button">
+                  Skip
+                </button>
+              </div>
+              <p
+                class="voice-message"
+                id="voice-message"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </section>
+          </div>
+
+          <div id="quiz-screen" hidden>
+            <p class="eyebrow">おとクイズ · Sound quiz</p>
+            <h1 class="quiz-title" id="quiz-title">
+              Which character did you hear?
+            </h1>
+            <p class="quiz-copy">Listen, then pick the matching hiragana.</p>
+            <div id="quiz-question">
+              <div class="quiz-play-row">
+                <button class="play-button" id="quiz-play" type="button">
+                  <svg
+                    class="button-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M5 10v4h4l5 4V6l-5 4H5Z"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M17 9a5 5 0 0 1 0 6m2-9a9 9 0 0 1 0 12"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                  Play sound
+                </button>
+              </div>
+              <div
+                class="choices"
+                id="choices"
+                role="group"
+                aria-label="Choose the character you heard"
+              ></div>
+              <p
+                class="quiz-message"
+                id="quiz-message"
+                role="status"
+                aria-live="polite"
+              ></p>
+              <div class="quiz-next-row">
+                <button class="next-button" id="quiz-next" type="button" hidden>
+                  Next question
+                </button>
+              </div>
+            </div>
+            <div id="quiz-result" hidden>
+              <p class="result-score" id="result-score"></p>
+              <p class="result-copy">Lovely listening!</p>
+              <button class="next-button" id="restart-quiz" type="button">
+                Play again
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span class="footer-sun" aria-hidden="true">✿</span> One little step at
+        a time
+      </footer>
+      <audio id="audio" preload="none"></audio>
+    </div>
+
+    <script>
+      const characterElement = document.querySelector("#character");
+      const hintElement = document.querySelector("#hint");
+      const counterElement = document.querySelector("#counter");
+      const messageElement = document.querySelector("#message");
+      const playButton = document.querySelector("#play");
+      const examplePractice = document.querySelector("#example-practice");
+      const exampleWordElement = document.querySelector("#example-word");
+      const exampleMeaningElement = document.querySelector("#example-meaning");
+      const playExampleButton = document.querySelector("#play-example");
+      const recordExampleButton = document.querySelector("#record-example");
+      const skipExampleButton = document.querySelector("#skip-example");
+      const voiceMessageElement = document.querySelector("#voice-message");
+      const previousButton = document.querySelector("#previous");
+      const nextButton = document.querySelector("#next");
+      const lessonScreen = document.querySelector("#lesson-screen");
+      const quizScreen = document.querySelector("#quiz-screen");
+      const quizQuestion = document.querySelector("#quiz-question");
+      const quizResult = document.querySelector("#quiz-result");
+      const quizPlayButton = document.querySelector("#quiz-play");
+      const quizNextButton = document.querySelector("#quiz-next");
+      const restartQuizButton = document.querySelector("#restart-quiz");
+      const choicesElement = document.querySelector("#choices");
+      const quizMessageElement = document.querySelector("#quiz-message");
+      const scoreBadge = document.querySelector("#score-badge");
+      const scoreElement = document.querySelector("#score");
+      const resultScoreElement = document.querySelector("#result-score");
+      const audioElement = document.querySelector("#audio");
+      let lessons = [];
+      let quizPool = [];
+      let currentIndex = 0;
+      let quizQuestions = [];
+      let questionIndex = 0;
+      let score = 0;
+      let answered = false;
+      let currentLesson = null;
+      let isBusy = false;
+
+      async function loadLessons() {
+        for (const filename of ["lessons.json", "lesson.json"]) {
+          try {
+            const response = await fetch(filename);
+            if (!response.ok)
+              throw new Error(`${filename}: ${response.status}`);
+            const data = await response.json();
+            if (!Array.isArray(data.lessons) || data.lessons.length === 0) {
+              throw new Error("The lessons list is empty or invalid.");
+            }
+            return data.lessons;
+          } catch (error) {
+            if (filename === "lesson.json") throw error;
+          }
+        }
+      }
+
+      function showLesson(index) {
+        lessonScreen.hidden = false;
+        quizScreen.hidden = true;
+        scoreBadge.hidden = true;
+        currentLesson = lessons[index];
+        characterElement.textContent = currentLesson.char ?? "";
+        hintElement.textContent = currentLesson.hindi_hint ?? "";
+        examplePractice.hidden = !currentLesson.example_word;
+        exampleWordElement.textContent = currentLesson.example_word ?? "";
+        exampleMeaningElement.textContent =
+          currentLesson.example_meaning_hi ?? "";
+        counterElement.textContent = `${String(index + 1).padStart(2, "0")} / ${String(lessons.length).padStart(2, "0")}`;
+        audioElement.src = currentLesson.audio ?? "";
+        audioElement.load();
+        messageElement.textContent = "";
+        setVoiceMessage("");
+        setBusy(false);
+      }
+
+      function setVoiceMessage(message, state = "") {
+        voiceMessageElement.textContent = message;
+        voiceMessageElement.dataset.state = state;
+      }
+
+      function setBusy(busy) {
+        isBusy = busy;
+        playButton.disabled = busy;
+        previousButton.disabled = busy || currentIndex === 0;
+        nextButton.disabled = busy;
+        playExampleButton.disabled = busy || !currentLesson?.example_audio;
+        recordExampleButton.disabled = busy || !currentLesson?.example_word;
+        skipExampleButton.disabled = busy;
+      }
+
+      function shuffled(items) {
+        const result = [...items];
+        for (let index = result.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [result[index], result[swapIndex]] = [
+            result[swapIndex],
+            result[index],
+          ];
+        }
+        return result;
+      }
+
+      function startQuiz() {
+        const uniqueLessons = lessons.filter(
+          (lesson, index, all) =>
+            all.findIndex((item) => item.char === lesson.char) === index,
+        );
+        if (uniqueLessons.length < 3) {
+          messageElement.textContent =
+            "Add at least 3 different hiragana to start the quiz.";
+          return;
+        }
+
+        quizPool = uniqueLessons;
+        quizQuestions = shuffled(quizPool);
+        questionIndex = 0;
+        score = 0;
+        scoreElement.textContent = score;
+        scoreBadge.hidden = false;
+        lessonScreen.hidden = true;
+        quizScreen.hidden = false;
+        quizQuestion.hidden = false;
+        quizResult.hidden = true;
+        renderQuestion();
+      }
+
+      function playQuizSound() {
+        audioElement.play().catch(() => {
+          quizMessageElement.textContent =
+            "Couldn't play the sound. Check that the audio file is available.";
+        });
+      }
+
+      function renderQuestion() {
+        if (questionIndex >= quizQuestions.length) {
+          quizQuestion.hidden = true;
+          quizResult.hidden = false;
+          counterElement.textContent = "Quiz complete";
+          resultScoreElement.textContent = `${score} / ${quizQuestions.length}`;
+          return;
+        }
+
+        const question = quizQuestions[questionIndex];
+        const alternatives = shuffled(
+          quizPool.filter((lesson) => lesson.char !== question.char),
+        ).slice(0, 2);
+        const choices = shuffled([question, ...alternatives]);
+        answered = false;
+        counterElement.textContent = `Q ${questionIndex + 1} / ${quizQuestions.length}`;
+        quizMessageElement.textContent = "";
+        quizNextButton.hidden = true;
+        audioElement.src = question.audio ?? "";
+        audioElement.load();
+        choicesElement.replaceChildren();
+
+        for (const choice of choices) {
+          const button = document.createElement("button");
+          button.className = "choice-button";
+          button.type = "button";
+          button.textContent = choice.char;
+          button.lang = "ja";
+          button.setAttribute("aria-label", `Choose ${choice.char}`);
+          button.addEventListener("click", () =>
+            selectAnswer(button, choice, question),
+          );
+          choicesElement.append(button);
+        }
+
+        playQuizSound();
+      }
+
+      function selectAnswer(button, choice, question) {
+        if (answered) return;
+        answered = true;
+        const correct = choice.char === question.char;
+        if (correct) score += 1;
+        scoreElement.textContent = score;
+
+        for (const option of choicesElement.children) {
+          option.disabled = true;
+          if (option.textContent === question.char)
+            option.classList.add("is-correct");
+        }
+        if (!correct) button.classList.add("is-wrong");
+        quizMessageElement.textContent = correct
+          ? "That's right! Great listening!"
+          : `Not quite. The sound was ${question.char}.`;
+        quizNextButton.textContent =
+          questionIndex + 1 === quizQuestions.length
+            ? "See score"
+            : "Next question";
+        quizNextButton.hidden = false;
+      }
+
+      playButton.addEventListener("click", async () => {
+        if (!audioElement.src) {
+          messageElement.textContent =
+            "Sound is not available for this lesson yet.";
+          return;
+        }
+        try {
+          await audioElement.play();
+          messageElement.textContent = "";
+        } catch {
+          messageElement.textContent =
+            "Couldn't play the sound. Check that the audio file is available.";
+        }
+      });
+
+      playExampleButton.addEventListener("click", async () => {
+        if (!currentLesson?.example_audio) return;
+        audioElement.src = currentLesson.example_audio;
+        audioElement.load();
+        try {
+          await audioElement.play();
+        } catch {
+          setVoiceMessage("Couldn't play the example audio. Please try again.");
+        }
+      });
+
+      async function submitPronunciation(blob) {
+        const formData = new FormData();
+        const extension = blob.type.includes("mp4") ? "mp4" : "webm";
+        formData.append("audio", blob, `pronunciation.${extension}`);
+        formData.append("expected", currentLesson.example_word);
+        for (const spelling of currentLesson.accepted ?? []) {
+          formData.append("accepted", spelling);
+        }
+
+        setVoiceMessage("Checking your pronunciation…", "checking");
+        try {
+          const response = await fetch("/check", {
+            method: "POST",
+            body: formData,
+          });
+          const result = await response.json();
+          if (!response.ok)
+            throw new Error(result.detail || "Pronunciation check failed.");
+
+          if (result.correct) {
+            setVoiceMessage("बहुत बढ़िया! すごい!", "correct");
+          } else {
+            setVoiceMessage(
+              `अच्छी कोशिश! फिर से सुनकर बोलें। Whisper ने सुना: ${result.transcript || "कुछ साफ़ नहीं सुना"}`,
+              "try-again",
+            );
+          }
+        } catch (error) {
+          setVoiceMessage(`Could not check the recording. ${error.message}`);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function recordExample() {
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+          setVoiceMessage(
+            "This browser does not support microphone recording.",
+          );
+          return;
+        }
+
+        setBusy(true);
+        setVoiceMessage("माइक शुरू हो रहा है…", "listening");
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const recorder = new MediaRecorder(stream);
+          const chunks = [];
+          recorder.addEventListener("dataavailable", (event) => {
+            if (event.data.size) chunks.push(event.data);
+          });
+          recorder.addEventListener("stop", () => {
+            stream.getTracks().forEach((track) => track.stop());
+            void submitPronunciation(
+              new Blob(chunks, { type: recorder.mimeType }),
+            );
+          });
+          recorder.start();
+          setVoiceMessage("Listening… अब शब्द बोलिए।", "listening");
+          window.setTimeout(() => {
+            if (recorder.state === "recording") recorder.stop();
+          }, 3000);
+        } catch (error) {
+          stream?.getTracks().forEach((track) => track.stop());
+          setBusy(false);
+          if (
+            error.name === "NotAllowedError" ||
+            error.name === "PermissionDeniedError"
+          ) {
+            setVoiceMessage(
+              "माइक की अनुमति नहीं मिली। ब्राउज़र सेटिंग में अनुमति देकर फिर कोशिश करें।",
+            );
+          } else {
+            setVoiceMessage("माइक शुरू नहीं हो सका। कृपया फिर कोशिश करें।");
+          }
+        }
+      }
+
+      recordExampleButton.addEventListener("click", recordExample);
+      skipExampleButton.addEventListener("click", () => {
+        examplePractice.hidden = true;
+      });
+
+      previousButton.addEventListener("click", () => {
+        if (currentIndex > 0) {
+          currentIndex -= 1;
+          showLesson(currentIndex);
+        }
+      });
+
+      nextButton.addEventListener("click", () => {
+        if (currentIndex + 1 < lessons.length) {
+          currentIndex += 1;
+          showLesson(currentIndex);
+        } else {
+          startQuiz();
+        }
+      });
+
+      quizPlayButton.addEventListener("click", playQuizSound);
+      quizNextButton.addEventListener("click", () => {
+        questionIndex += 1;
+        renderQuestion();
+      });
+      restartQuizButton.addEventListener("click", startQuiz);
+
+      loadLessons()
+        .then((loadedLessons) => {
+          lessons = loadedLessons;
+          showLesson(currentIndex);
+        })
+        .catch(() => {
+          counterElement.textContent = "Lesson unavailable";
+          messageElement.textContent =
+            "Couldn't load lessons. Open this page from a local web server and check the lesson JSON.";
+        });
+    </script>
+  </body>
+</html>
