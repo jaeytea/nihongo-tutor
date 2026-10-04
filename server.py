@@ -9,7 +9,9 @@ from faster_whisper import WhisperModel
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from pykakasi import kakasi
+from llm import ask_llm
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -29,6 +31,55 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/audio", StaticFiles(directory=BASE_DIR / "audio"), name="audio")
+
+
+class ExplainRequest(BaseModel):
+    expected: str
+    meaning_hi: str
+    heard: str
+
+
+EXPLAIN_SYSTEM_PROMPT = (
+    "You are a kind Japanese tutor for a 6th grade child whose first language is Hindi. "
+    "The child tried to say a Japanese word and said something different. "
+    "In at most 2 short sentences, in simple Hindi, tell them what to listen for or fix. "
+    "Write any Japanese only in hiragana. Be encouraging and never harsh. "
+    "If you are not sure, say so instead of guessing."
+)
+EXPLAIN_FALLBACK = "थोड़ा और ध्यान से सुनो और फिर से कोशिश करो!"
+ASK_SYSTEM_PROMPT = (
+    "You are a friendly Japanese tutor for a 6th grade child whose first language is Hindi. "
+    "Answer in simple Hindi in at most 3 short sentences. "
+    "Write Japanese only in hiragana, never romaji. "
+    "Only answer questions about learning Japanese; for anything else, kindly say you can only help with Japanese. "
+    "If you are not sure, say so instead of guessing. Never invent words."
+)
+ASK_FALLBACK = "अभी जवाब नहीं मिल पाया। चलो, जापानी सीखते रहें!"
+
+
+@app.post("/explain")
+def explain_pronunciation(payload: ExplainRequest) -> dict[str, str]:
+    user_message = (
+        f"Expected Japanese word: {payload.expected}\n"
+        f"Hindi meaning: {payload.meaning_hi}\n"
+        f"Whisper heard: {payload.heard}"
+    )
+    reply = ask_llm(EXPLAIN_SYSTEM_PROMPT, user_message)
+    if reply and reply.strip():
+        return {"message": reply.strip(), "source": "llm"}
+    return {"message": EXPLAIN_FALLBACK, "source": "fallback"}
+
+
+class AskRequest(BaseModel):
+    question: str = Field(max_length=200)
+
+
+@app.post("/ask")
+def ask_question(payload: AskRequest) -> dict[str, str]:
+    reply = ask_llm(ASK_SYSTEM_PROMPT, payload.question)
+    if reply and reply.strip():
+        return {"message": reply.strip(), "source": "llm"}
+    return {"message": ASK_FALLBACK, "source": "fallback"}
 
 
 @app.get("/", include_in_schema=False)

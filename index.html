@@ -304,6 +304,60 @@
         color: #55736a;
       }
 
+      .voice-explanation {
+        min-height: 20px;
+        margin: 4px 0 0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .tutor-ask {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px dashed rgb(25 60 54 / 28%);
+        text-align: left;
+      }
+
+      .tutor-ask-title {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .tutor-ask-form {
+        display: flex;
+        align-items: stretch;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .tutor-question {
+        min-width: 0;
+        min-height: 50px;
+        flex: 1;
+        padding: 9px 12px;
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+        font-size: 15px;
+      }
+
+      .tutor-question:focus-visible {
+        outline: 3px solid #2679a1;
+        outline-offset: 2px;
+      }
+
+      .tutor-answer {
+        min-height: 22px;
+        margin: 10px 0 0;
+        font-size: 15px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
       .message {
         min-height: 20px;
         margin: 18px 0 0;
@@ -472,6 +526,13 @@
           min-height: 50px;
           padding-inline: 15px;
           font-size: 16px;
+        }
+        .tutor-ask-form {
+          gap: 8px;
+        }
+        .tutor-question {
+          padding-inline: 9px;
+          font-size: 14px;
         }
         .choices {
           gap: 8px;
@@ -649,6 +710,38 @@
                 role="status"
                 aria-live="polite"
               ></p>
+              <p
+                class="voice-explanation"
+                id="voice-explanation"
+                role="status"
+                aria-live="polite"
+              ></p>
+            </section>
+            <section class="tutor-ask" aria-labelledby="tutor-ask-title">
+              <h2 class="tutor-ask-title" id="tutor-ask-title">
+                Ask the tutor
+              </h2>
+              <form class="tutor-ask-form" id="tutor-ask-form">
+                <input
+                  class="tutor-question"
+                  id="tutor-question"
+                  name="question"
+                  type="text"
+                  maxlength="200"
+                  placeholder="जापानी के बारे में पूछें"
+                  aria-label="Ask a question about Japanese"
+                  required
+                />
+                <button class="next-button" id="tutor-ask-button" type="submit">
+                  Ask
+                </button>
+              </form>
+              <p
+                class="tutor-answer"
+                id="tutor-answer"
+                role="status"
+                aria-live="polite"
+              ></p>
             </section>
           </div>
 
@@ -732,6 +825,12 @@
       const recordExampleButton = document.querySelector("#record-example");
       const skipExampleButton = document.querySelector("#skip-example");
       const voiceMessageElement = document.querySelector("#voice-message");
+      const voiceExplanationElement =
+        document.querySelector("#voice-explanation");
+      const tutorAskForm = document.querySelector("#tutor-ask-form");
+      const tutorQuestionInput = document.querySelector("#tutor-question");
+      const tutorAskButton = document.querySelector("#tutor-ask-button");
+      const tutorAnswerElement = document.querySelector("#tutor-answer");
       const previousButton = document.querySelector("#previous");
       const nextButton = document.querySelector("#next");
       const lessonScreen = document.querySelector("#lesson-screen");
@@ -790,6 +889,7 @@
         audioElement.load();
         messageElement.textContent = "";
         setVoiceMessage("");
+        voiceExplanationElement.textContent = "";
         setBusy(false);
       }
 
@@ -939,8 +1039,18 @@
       });
 
       async function submitPronunciation(blob) {
+        if (!blob.size) {
+          setVoiceMessage("No audio was captured. Please speak and try again.");
+          setBusy(false);
+          return;
+        }
+
         const formData = new FormData();
-        const extension = blob.type.includes("mp4") ? "mp4" : "webm";
+        const extension = blob.type.includes("mp4")
+          ? "mp4"
+          : blob.type.includes("ogg")
+            ? "ogg"
+            : "webm";
         formData.append("audio", blob, `pronunciation.${extension}`);
         formData.append("expected", currentLesson.example_word);
         for (const spelling of currentLesson.accepted ?? []) {
@@ -953,9 +1063,19 @@
             method: "POST",
             body: formData,
           });
-          const result = await response.json();
-          if (!response.ok)
-            throw new Error(result.detail || "Pronunciation check failed.");
+          const responseText = await response.text();
+          let result = {};
+          try {
+            result = responseText ? JSON.parse(responseText) : {};
+          } catch {}
+          if (!response.ok) {
+            throw new Error(
+              result.detail ||
+                `Speech checker returned HTTP ${response.status}.`,
+            );
+          }
+          if (!responseText)
+            throw new Error("Speech checker returned no result.");
 
           if (result.correct) {
             setVoiceMessage("बहुत बढ़िया! すごい!", "correct");
@@ -964,11 +1084,37 @@
               `अच्छी कोशिश! फिर से सुनकर बोलें। Whisper ने सुना: ${result.transcript || "कुछ साफ़ नहीं सुना"}`,
               "try-again",
             );
+            void explainMistake(result.transcript || "");
           }
         } catch (error) {
           setVoiceMessage(`Could not check the recording. ${error.message}`);
         } finally {
           setBusy(false);
+        }
+      }
+
+      async function explainMistake(heard) {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 5000);
+        voiceExplanationElement.textContent = "thinking...";
+        try {
+          const response = await fetch("/explain", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              expected: currentLesson.example_word,
+              meaning_hi: currentLesson.example_meaning_hi ?? "",
+              heard,
+            }),
+            signal: controller.signal,
+          });
+          if (!response.ok) throw new Error("Explanation unavailable");
+          const result = await response.json();
+          voiceExplanationElement.textContent = result.message || "";
+        } catch {
+          voiceExplanationElement.textContent = "";
+        } finally {
+          window.clearTimeout(timeout);
         }
       }
 
@@ -981,20 +1127,30 @@
         }
 
         setBusy(true);
+        voiceExplanationElement.textContent = "";
         setVoiceMessage("माइक शुरू हो रहा है…", "listening");
         let stream;
         try {
           stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const recorder = new MediaRecorder(stream);
+          const mimeType = [
+            "audio/webm;codecs=opus",
+            "audio/mp4",
+            "audio/webm",
+            "audio/ogg;codecs=opus",
+          ].find((type) => MediaRecorder.isTypeSupported(type));
+          const recorder = mimeType
+            ? new MediaRecorder(stream, { mimeType })
+            : new MediaRecorder(stream);
           const chunks = [];
           recorder.addEventListener("dataavailable", (event) => {
             if (event.data.size) chunks.push(event.data);
           });
           recorder.addEventListener("stop", () => {
             stream.getTracks().forEach((track) => track.stop());
-            void submitPronunciation(
-              new Blob(chunks, { type: recorder.mimeType }),
-            );
+            const blob = new Blob(chunks, {
+              type: recorder.mimeType || chunks[0]?.type || "",
+            });
+            void submitPronunciation(blob);
           });
           recorder.start();
           setVoiceMessage("Listening… अब शब्द बोलिए।", "listening");
@@ -1020,6 +1176,30 @@
       recordExampleButton.addEventListener("click", recordExample);
       skipExampleButton.addEventListener("click", () => {
         examplePractice.hidden = true;
+      });
+
+      tutorAskForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const question = tutorQuestionInput.value.trim();
+        if (!question) return;
+
+        tutorAskButton.disabled = true;
+        tutorAnswerElement.textContent = "thinking...";
+        try {
+          const response = await fetch("/ask", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error("Request failed");
+          tutorAnswerElement.textContent = result.message || "";
+        } catch {
+          tutorAnswerElement.textContent =
+            "जवाब नहीं मिल पाया। कृपया फिर से कोशिश करें।";
+        } finally {
+          tutorAskButton.disabled = false;
+        }
       });
 
       previousButton.addEventListener("click", () => {
