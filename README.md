@@ -59,7 +59,7 @@ Again, since we're using a small model, it is prone to mistakes and needs to be 
 You need Python 3 and a Mac or Linux machine (I built this on a MacBook M4).
 
 ```bash
-git clone <your-repo-url>
+git clone <repo-url>
 cd nihongo-tutor
 
 python3 -m venv .venv
