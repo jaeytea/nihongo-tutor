@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f4edc8" />
-    <title>Hiragana Tutor</title>
+    <title>Nihongo 101</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -142,7 +142,7 @@
       }
 
       .lesson-board {
-        width: min(100%, 560px);
+        width: 100%;
         padding: clamp(22px, 6vw, 42px) clamp(18px, 7vw, 58px) 34px;
         border: 3px solid var(--ink);
         border-radius: 20px;
@@ -592,7 +592,7 @@
         <div class="brand" aria-label="Hiragana Picnic">
           <div class="brand-mark" aria-hidden="true">あ</div>
           <div>
-            <p class="brand-name">Hiragana Lessons</p>
+            <p class="brand-name">Nihongo 101</p>
             <p class="brand-note">Little sounds, big discoveries</p>
           </div>
         </div>
@@ -1161,7 +1161,7 @@
 
       async function explainMistake(heard) {
         const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), 5000);
+        const timeout = window.setTimeout(() => controller.abort(), 20000);
         voiceExplanationElement.textContent = "thinking...";
         try {
           const response = await fetch("/explain", {
