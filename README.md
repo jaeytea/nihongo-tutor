@@ -2,7 +2,15 @@
 
 This project is built for Hacktoberfest Weekend Challenge: **Build for a Friend**.
 
+![demo](images/Screenshot%202026-10-05%20at%2011.01.12 AM.png)
+
 Nihongo 101 is a small Japanese tutor I built for my little brother, who is in 6th grade and wants to learn Japanese. His first language is Hindi, so the tutor teaches through Hindi instead of English: every new sound comes with a Hindi hint, and the Hindi shrinks as he progresses.
+
+## Demo
+
+Click the GIF to watch full demo.
+
+[![Watch Project Demo](images/nihongo.gif)](https://drive.google.com/file/d/1CXY9eTg1EDWtAQWfLSwHTHcGMyRqBjTB/view?usp=drive_link)
 
 ## Why I made this
 
@@ -17,6 +25,8 @@ SO I thought, he shouldn't have to learn through a second language(English) just
 - **Say it and I'll check:** The app has mic feature for practicing words, he taps the mic, says the word, and the app tells him whether it heard it right. Feedback is always gentle, and he can skip any word.
 - Mistake explainer: when he gets a word wrong, a local language model explains in simple Hindi what to listen for.
 - He can also use Ask the tutor feature to ask his curious questions that come up while going through the lessons.
+
+![askthetutor](images/Screenshot%202026-10-05%20at%2011.00.09 AM.png)
 
 Katakana is in the plan, but I held it back on purpose. His 6th grade syllabus from the book Ume mentions complete Hiragana as learning outcome by end of the year.
 
